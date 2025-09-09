@@ -90,4 +90,8 @@ abstract class FlutterVpnPlatform extends PlatformInterface {
     int? port,
   }) async =>
       throw UnimplementedError();
+
+  Future<Map<String, dynamic>?> getSavedIKEv2Preferences() async => throw UnimplementedError();
+
+  Future<String?> getConnectionStartDateTime() async => throw UnimplementedError();
 }

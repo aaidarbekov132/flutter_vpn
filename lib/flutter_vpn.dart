@@ -83,4 +83,9 @@ class FlutterVpn {
         mtu: mtu,
         port: port,
       );
+
+  static Future<Map<String, dynamic>?> getSavedIKEv2Preferences() =>
+      FlutterVpnPlatform.instance.getSavedIKEv2Preferences();
+
+  static Future<String?> getConnectionStartDateTime() => FlutterVpnPlatform.instance.getConnectionStartDateTime();
 }

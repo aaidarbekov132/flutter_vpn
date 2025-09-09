@@ -26,7 +26,7 @@ public class SwiftFlutterVpnPlugin: NSObject, FlutterPlugin {
     stateChannel.setStreamHandler((VPNStateHandler() as! FlutterStreamHandler & NSObjectProtocol))
 
     channel.setMethodCallHandler {
-      (call: FlutterMethodCall, result: FlutterResult) -> Void in
+      (call: FlutterMethodCall, result: @escaping FlutterResult) -> Void in
       if call.method == "connect" {
         let args = call.arguments! as! [NSString: NSString]
         VpnService.shared.connect(
@@ -44,6 +44,10 @@ public class SwiftFlutterVpnPlugin: NSObject, FlutterPlugin {
         VpnService.shared.disconnect(result: result)
       } else if call.method == "getCurrentState" {
         VpnService.shared.getState(result: result)
+      } else if call.method == "getStartTime" {
+        VpnService.shared.getConnectionStartDateTime(result: result)
+      } else if call.method == "getSavedIKEv2Preferences" {
+        VpnService.shared.getSavedIKEv2Preferences(result: result)
       }
     }
   }

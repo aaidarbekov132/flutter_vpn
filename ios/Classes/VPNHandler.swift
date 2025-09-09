@@ -47,7 +47,7 @@ class VpnService {
     }
     let kcs = KeychainService()
     var configurationSaved = false
-
+    var connectionStartDate: Date?
 
     // MARK: - Init
     init() {
@@ -148,6 +148,7 @@ class VpnService {
     func startTunnel() {
         do {
             try self.vpnManager.connection.startVPNTunnel()
+            self.connectionStartDate = Date()
         } catch let error as NSError {
             var errorStr = ""
             switch error {
@@ -223,8 +224,37 @@ class VpnService {
         }
     }
 
+    func getSavedIKEv2Preferences(result: @escaping FlutterResult) {
+        vpnManager.loadFromPreferences { error in
+            if let error = error {
+                result(FlutterError(code: "preferences_error", message: error.localizedDescription, details: nil))
+                return
+            }
+            if let ikev2 = self.vpnManager.protocolConfiguration as? NEVPNProtocolIKEv2 {
+                let prefs: [String: Any] = [
+                    "serverAddress": ikev2.serverAddress ?? "",
+                    "username": ikev2.username ?? "",
+                    "remoteIdentifier": ikev2.remoteIdentifier ?? "",
+                    "localIdentifier": ikev2.localIdentifier ?? "",
+                    "useExtendedAuthentication": ikev2.useExtendedAuthentication,
+                    "disconnectOnSleep": ikev2.disconnectOnSleep
+                ]
+                result(prefs)
+            } else {
+                result(nil)
+            }
+        }
+    }
 
-    // MARK: - Event callbacks
+    func getConnectionStartDateTime(result: FlutterResult) {
+        if let date = self.connectionStartDate {
+            let formatter = ISO8601DateFormatter()
+            result(formatter.string(from: date))
+        } else {
+            result(nil)
+        }
+    }
+
     func statusChanged(_: Notification?) {
         switch vpnStatus {
         case .connected:
