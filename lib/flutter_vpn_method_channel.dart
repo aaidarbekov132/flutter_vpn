@@ -129,4 +129,17 @@ class MethodChannelFlutterVpn extends FlutterVpnPlatform {
         if (mtu != null) 'mtu': mtu,
         if (port != null) 'port': port,
       });
+
+  @override
+  Future<Map<String, dynamic>?> getSavedIKEv2Preferences() async {
+    final prefs = await methodChannel.invokeMethod('getSavedIKEv2Preferences');
+    if (prefs == null) return null;
+    return Map<String, dynamic>.from(prefs);
+  }
+
+  @override
+  Future<String?> getConnectionStartDateTime() async {
+    final dateTime = await methodChannel.invokeMethod<String>('getStartTime');
+    return dateTime;
+  }
 }
