@@ -49,6 +49,8 @@ class VpnService {
     var configurationSaved = false
     var connectionStartDate: Date?
 
+    private var pendingConnectionDetails: [String: Any?]?
+
     // MARK: - Init
     init() {
         NotificationCenter.default.addObserver(forName: NSNotification.Name.NEVPNStatusDidChange, object: nil, queue: OperationQueue.main, using: statusChanged)
@@ -63,6 +65,37 @@ class VpnService {
     @available(iOS 9.0, *)
     func connect(
         result: FlutterResult,
+        type: String,
+        server: String,
+        username: String,
+        password: String,
+        secret: String?,
+        description: String?
+    ) {
+        let status = vpnManager.connection.status
+        let details: [String: Any?] = [
+            "type": type, "server": server, "username": username,
+            "password": password, "secret": secret, "description": description
+        ]
+
+        // If disconnected, start the connection flow immediately.
+        if status == .disconnected || status == .invalid {
+            self.startConnectionFlow(
+                type: type, server: server, username: username, password: password,
+                secret: secret, description: description
+            )
+        } 
+        // If connected or connecting, save details and stop the tunnel.
+        // The connection will be started by `statusChanged` once disconnected.
+        else {
+            self.pendingConnectionDetails = details
+            vpnManager.connection.stopVPNTunnel()
+        }
+        
+        result(nil)
+    }
+
+    private func startConnectionFlow(
         type: String,
         server: String,
         username: String,
@@ -142,7 +175,6 @@ class VpnService {
                 })
             })
         }
-        result(nil)
     }
 
     func startTunnel() {
@@ -263,6 +295,19 @@ class VpnService {
 
         case .disconnected:
             VPNStateHandler.updateState(FlutterVpnState.disconnected.rawValue)
+            
+            // Check if there's a pending connection to start
+            if let details = self.pendingConnectionDetails {
+                self.pendingConnectionDetails = nil // Clear pending details
+                self.startConnectionFlow(
+                    type: details["type"] as! String,
+                    server: details["server"] as! String,
+                    username: details["username"] as! String,
+                    password: details["password"] as! String,
+                    secret: details["secret"] as? String,
+                    description: details["description"] as? String
+                )
+            }
             break
 
         case .connecting:
